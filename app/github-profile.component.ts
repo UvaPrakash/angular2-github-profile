@@ -1,9 +1,33 @@
-import {Component, OnInit} from 'angular2/core';
+import {Component, Pipe, PipeTransform, OnInit} from 'angular2/core';
+import {NgFor, NgIf} from 'angular2/common';
 import {HTTP_PROVIDERS} from 'angular2/http';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/observable/forkJoin';
 
 import {GitHubService} from './github.service';
+
+@Pipe({name: 'values'})
+
+export class ValuesPipe implements PipeTransform {
+    transform(value: any, args?: any[]): Object[] {
+        let keyArr = Object.keys(value),
+            dataArr = [],
+            keyName = args[0];
+
+        keyArr.forEach(key => {
+            value[key][keyName] = key;
+            dataArr.push(value[key])
+        });
+
+        if(args[1]) {
+            dataArr.sort((a: Object, b: Object): number => {
+                return a[keyName] > b[keyName] ? 1 : -1;
+            });
+        }
+
+        return dataArr;
+    }
+}
 
 @Component({
 	selector: 'github-profile',
@@ -23,7 +47,7 @@ import {GitHubService} from './github.service';
 
 		<h3>Followers</h3>
 
-		<div *ngFor="#follower of followers" class="media">
+		<div *ngFor='#follower of followers | values:"key":true' class="media">
 			<div class="media-left">
 				<a href="#">
 					<img src="{{ follower.avatar_url }}" alt="" class="media-object avatar" />
@@ -37,6 +61,8 @@ import {GitHubService} from './github.service';
 		</div>
 	`,
 	providers: [HTTP_PROVIDERS, GitHubService],
+	pipes: [ValuesPipe],
+	directives: [NgFor, NgIf]
 })
 
 export class GitHubProfileComponent implements OnInit {
